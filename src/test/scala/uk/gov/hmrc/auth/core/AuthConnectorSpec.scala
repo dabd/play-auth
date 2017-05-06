@@ -224,5 +224,20 @@ class AuthConnectorSpec extends WordSpec with ScalaFutures {
         }
       }
     }
+
+    "throw AuthorisationException on upstream 5xx error" in new UnauthorisedSetup {
+
+      override def headerMsg: String = "some-upstream-5xx-error"
+
+      val result: Future[Unit] = authConnector.authorise(TestPredicate1("aValue"), EmptyRetrieval)
+
+      whenReady(result.failed) {
+        e => {
+          e shouldBe a[AuthorisationException]
+          val authorisationException = e.asInstanceOf[AuthorisationException]
+          authorisationException.getMessage should include(headerMsg)
+        }
+      }
+    }
   }
 }

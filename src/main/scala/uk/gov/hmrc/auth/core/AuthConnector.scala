@@ -52,8 +52,10 @@ trait PlayAuthConnector extends AuthConnector {
         case bdy => bdy.as[A](retrieval.reads)
       }
     } recoverWith {
-      case res@Upstream4xxResponse(_, 401, _, headers) =>
+      case Upstream4xxResponse(_, 401, _, headers) =>
         Future.failed(AuthenticateHeaderParser.parse(headers))
+      case Upstream5xxResponse(message, _, _) =>
+        Future.failed(AuthorisationException.fromString(message))
     }
   }
 
